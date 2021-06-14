@@ -14,7 +14,6 @@ import java.util.List;
 
 public class VideoTypeUtils {
 	private static final String TAG = "VideoTypeUtils";
-	private static MediaMetadataRetriever retriever;
 
 	/**
 	 * compare the fuzzy values of vertical direction and horizontal direction
@@ -61,28 +60,26 @@ public class VideoTypeUtils {
 		float scaleHeight = ((float) newHeight) / height;
 		// zoom
 		matrix.postScale(scaleWidth, scaleHeight);
-		Bitmap bitmap = Bitmap.createBitmap(bgimage, 0, 0, (int) width,
+		return Bitmap.createBitmap(bgimage, 0, 0, (int) width,
 				(int) height, matrix, true);
-		return bitmap;
 	}
 
 	public static int getVideoType(String videoPath) {
 		// File video = new File(videoPath);
-		retriever = new MediaMetadataRetriever();
+		MediaMetadataRetriever retriever = new MediaMetadataRetriever();
 		retriever.setDataSource(videoPath);
 		int height = Integer.parseInt(retriever.extractMetadata(
 				MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)); // video height
 		int width = Integer.parseInt(retriever.extractMetadata(
 				MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)); // video width
 		Log.d(TAG, "height:" + height + "***width:" + width);
-		DecimalFormat df = new DecimalFormat("0.0");
-		float radio = Float.parseFloat(df.format((float) width / height));
+		DecimalFormat df = new DecimalFormat("#.#"); // #.# instead of 0.0
+		float radio = Float.parseFloat(df.format((double) width / height).toString()); // double cast + toString added
 		Log.d(TAG, "radio = " + radio);
 		Bitmap bitmap = retriever.getFrameAtTime();
 		Float[] compareResultArray = fuzzyCompareImage(bitmap);
-		int videoType = getType(radio, compareResultArray[0],
+		return getType(radio, compareResultArray[0],
 				compareResultArray[1]);
-		return videoType;
 	}
 
 	/**
@@ -98,7 +95,7 @@ public class VideoTypeUtils {
 				"radio = " + radio + "**horizontalCompareResult = "
 						+ horizontalCompareResult + "**verticalCompareResult = "
 						+ verticalCompareResult);
-		if (radio == 1) {
+		if (radio == 1.0) {
 			if (verticalCompareResult > Constant.ABSOLUTE_CRITICAL_VALUE
 					&& verticalCompareResult
 							- horizontalCompareResult > Constant.RELATIVE_CRITICAL_VALUE) {
@@ -111,7 +108,7 @@ public class VideoTypeUtils {
 //				return "180°";
 			}
 		}
-		if (radio == 2) {
+		if (radio == 2.0) {
 			if (horizontalCompareResult > Constant.ABSOLUTE_CRITICAL_VALUE
 					&& horizontalCompareResult
 							- verticalCompareResult > Constant.RELATIVE_CRITICAL_VALUE) {
@@ -129,7 +126,7 @@ public class VideoTypeUtils {
 //				return "360°";
 			}
 		}
-		if (radio == 4) {
+		if (radio == 4.0) {
 			// 360°3D left right
 			 return MovieType.TYPE_3D360_LR;
 		}
